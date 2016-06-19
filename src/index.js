@@ -52,7 +52,7 @@ export function createSetter(path: any[], options?: {
       basePath: path
     }
     if (options.domain) suboptions.domain += '.' + options.domain
-    createSetter([...path, ...subpath], suboptions)
+    return createSetter([...path, ...subpath], suboptions)
   }
 
   return set
@@ -64,7 +64,7 @@ export function createSetters(fields: Array<any[]> | {[name: string]: any[]}, op
 } = {}): {[name: string]: Setter} {
   if (Array.isArray(fields)) {
     fields = keyBy(fields, path => camelCase('set' + path.filter(p => typeof p !== 'number')
-      // flow-issue(react-bind-data-redux)
+      // flow-issue(redux-setters)
       .map(p => typeof p === 'symbol' ? p.substring(7) : p)
       .join(' ')))
   }
