@@ -26,7 +26,7 @@ export function createSetter(path: any[], options?: {
   domain?: string,
 } = {}): Setter {
   const {domain} = options
-  
+
   let type = 'SET_' + snakeCase(normalize(last(path))).toUpperCase()
   if (domain) type = domain + '.' + type
 
@@ -47,19 +47,19 @@ export function createSetter(path: any[], options?: {
 
   set.sub = (subpath, options = {}) => {
     let suboptions = {
-      domain: domain || '',
+      domain: domain || ''
     }
     if (options.domain) suboptions.domain += '.' + options.domain
     return createSetter([...path, ...subpath], suboptions)
   }
   set.subs = (subfields, options = {}) => {
     let suboptions = {
-      domain: domain || '',
+      domain: domain || ''
     }
     if (options.domain) suboptions.domain += '.' + options.domain
     if (Array.isArray(subfields)) subfields = subfields.map(subpath => [...path, ...subpath])
     else subfields = mapValues(subfields, subpath => [...path, ...subpath])
-    return createSetters(subfields, suboptions)     
+    return createSetters(subfields, suboptions)
   }
 
   return set
