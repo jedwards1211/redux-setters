@@ -47,6 +47,8 @@
     "lodash.camelcase": "^4.1.1",
     "lodash.keyby": "^4.4.0",
     "lodash.mapvalues": "^4.4.0",
+    "lodash.memoize": "^4.1.0",
+    "lodash.set": "^4.2.0",
     "lodash.snakecase": "^4.0.1"
   }
 }

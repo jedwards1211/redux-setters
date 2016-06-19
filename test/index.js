@@ -1,6 +1,7 @@
-import {createSetter} from '../src'
+import {createSetter, createDispatcher, reducer} from '../src'
 
 import {expect} from 'chai'
+import {spy} from 'sinon'
 
 describe('createSetter', () => {
   describe('without options', () => {
@@ -82,6 +83,37 @@ describe('createSetter', () => {
       expect(action.payload).to.equal('Edwards')
       expect(action.error).to.equal(undefined)
       expect(action.meta.reduxPath).to.deep.equal(['UserView', 'document', 'lastName'])
+    })
+  })
+  describe('dispatcher', () => {
+    it('works', () => {
+      const document = createSetter(['UserView', 'document'], {domain: 'USER_VIEW'})
+      const dispatch = spy()
+      const dispatcher = createDispatcher(dispatch, document)
+
+      dispatcher(['firstName'], 'Andy')
+      expect(dispatch.firstCall.args).to.deep.equal([
+        {
+          type: 'USER_VIEW.SET_FIRST_NAME',
+          payload: 'Andy',
+          meta: {
+            _redux_setters_: true,
+            reduxPath: ['UserView', 'document', 'firstName']
+          }
+        }
+      ])
+    })
+  })
+  describe('reducer', () => {
+    it('ignores actions not tagged with _redux_setters_', () => {
+      expect(reducer(422, {type: 'TEST'})).to.equal(422)
+      expect(reducer({}, {type: 'TEST', payload: 422, meta: {reduxPath: ['number']}})).to.deep.equal({})
+    })
+    it('handles actions tagged with _redux_setters_', () => {
+      const setNumber = createSetter(['number'])
+      expect(reducer({}, setNumber(422))).to.deep.equal({number: 422})
+      const setRoot = createSetter([])
+      expect(reducer(422, setRoot(566))).to.equal(566)
     })
   })
 })
