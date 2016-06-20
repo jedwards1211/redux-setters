@@ -5,7 +5,6 @@ import camelCase from 'lodash.camelcase'
 import mapValues from 'lodash.mapvalues'
 import keyBy from 'lodash.keyby'
 import last from 'lodash.last'
-import memoize from 'lodash.memoize'
 import lodashSet from 'lodash.set'
 
 type Action = {
@@ -18,7 +17,8 @@ type Action = {
 type Reducer = (state: any, action: Action) => any
 
 type Options = {
-  domain?: string
+  domain?: string,
+  nosub?: boolean,
 }
 
 type Setter = {
@@ -33,7 +33,7 @@ function normalize(elem: any) {
 }
 
 export function createSetter(path: any[], options?: Options = {}): Setter {
-  const {domain} = options
+  const {domain, nosub} = options
 
   let type = 'SET_' + snakeCase(normalize(last(path))).toUpperCase()
   if (domain) type = domain + '.' + type
@@ -53,21 +53,25 @@ export function createSetter(path: any[], options?: Options = {}): Setter {
     return action
   }
 
-  set.sub = (subpath, options = {}) => {
-    let suboptions = {
-      domain: domain || ''
+  if (!nosub) {
+    set.sub = (subpath, options = {}) => {
+      let suboptions = {
+        ...options,
+        domain: domain || ''
+      }
+      if (options.domain) suboptions.domain += '.' + options.domain
+      return createSetter([...path, ...subpath], suboptions)
     }
-    if (options.domain) suboptions.domain += '.' + options.domain
-    return createSetter([...path, ...subpath], suboptions)
-  }
-  set.subs = (subfields, options = {}) => {
-    let suboptions = {
-      domain: domain || ''
+    set.subs = (subfields, options = {}) => {
+      let suboptions = {
+        ...options,
+        domain: domain || ''
+      }
+      if (options.domain) suboptions.domain += '.' + options.domain
+      if (Array.isArray(subfields)) subfields = subfields.map(subpath => [...path, ...subpath])
+      else subfields = mapValues(subfields, subpath => [...path, ...subpath])
+      return createSetters(subfields, suboptions)
     }
-    if (options.domain) suboptions.domain += '.' + options.domain
-    if (Array.isArray(subfields)) subfields = subfields.map(subpath => [...path, ...subpath])
-    else subfields = mapValues(subfields, subpath => [...path, ...subpath])
-    return createSetters(subfields, suboptions)
   }
 
   return set
@@ -83,9 +87,8 @@ export function createSetters(fields: Array<any[]> | {[name: string]: any[]}, op
 
 export function createDispatcher(dispatch: (action: Action) => any, setter: Setter): (path: any[], payload: any) => void
 {
-  const getSetter = memoize(path => setter.sub(path), JSON.stringify)
   return function dispatcher(path, payload) {
-    dispatch(getSetter(path)(payload))
+    dispatch(setter.sub(path, {nosub: true})(payload))
   }
 }
 
